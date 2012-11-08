@@ -1,0 +1,31 @@
+while true do
+term.clear()
+term.setCursorPos(1,1)
+print("Type any simple equation. Type \"exit\" to exit. ")
+res = ""
+equ = read()
+equs = {}
+if equ == "exit" then return end
+for i in string.gmatch(equ, "[^%s]+") do
+equs[#equs + 1] = i
+end
+if tonumber(equs[1]) == nil or tonumber(equs[3]) == nil then
+res = "Values are not numbers"
+else
+if equs[2] == "+" then
+res = tonumber(equs[1]) + tonumber(equs[3])
+elseif equs[2] == "-" then
+res = tonumber(equs[1]) - tonumber(equs[3])
+elseif equs[2] == "*" then
+res = tonumber(equs[1]) * tonumber(equs[3])
+elseif equs[2] == "/" then
+res = tonumber(equs[1]) / tonumber(equs[3])
+else
+res = "Invalid Operator"
+end
+end
+
+print(res)
+print("Any key to continue")
+os.pullEvent()
+end

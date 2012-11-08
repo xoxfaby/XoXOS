@@ -1,0 +1,49 @@
+serverID = 0
+chatServerID = 1 
+
+
+local sPath = ".:/rom/programs"
+if turtle then
+	sPath = sPath..":/rom/programs/turtle"
+else
+	sPath = sPath..":/rom/programs/computer"
+end
+if http then
+	sPath = sPath..":/rom/programs/http"
+end
+
+shell.setPath( sPath )
+help.setPath( "/rom/help" )
+
+shell.setAlias( "ls", "list" )
+shell.setAlias( "dir", "list" )
+shell.setAlias( "cp", "copy" )
+shell.setAlias( "mv", "move" )
+shell.setAlias( "rm", "delete" )
+
+if fs.exists( "/rom/autorun" ) and fs.isDir( "/rom/autorun" ) then
+	local tFiles = fs.list( "/rom/autorun" )
+	table.sort( tFiles )
+	for n, sFile in ipairs( tFiles ) do
+		if string.sub( sFile, 1, 1 ) ~= "." then
+			local sPath = "/rom/autorun/"..sFile
+			if not fs.isDir( sPath ) then
+				shell.run( sPath )
+			end
+		end
+	end
+end
+
+os.reboot = function()
+print("Please learn how to use loops")
+print("To reboot is not the right way to go")
+end
+
+oldrss = rs.setOutput
+rs.setOutput = function( a, b )
+oldrss(a, b)
+sleep(0.05)
+end
+
+
+if os.computerID() == serverID then shell.run("XoXOSLS") elseif os.computerID() == ChatServerID then shell.run("XoXOSCS") else while true do shell.run("XoXOS") end end

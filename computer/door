@@ -1,0 +1,111 @@
+term.clear()
+term.setCursorPos(1,1)
+password = ""
+passwordC = ""
+passwordR = ""
+doorSide = ""
+doorT = 0
+ret = ""
+
+if fs.exists("doorconfig") then
+	conffile = fs.open("doorconfig", "r")
+	password = conffile.readLine() or "123"
+	passwordC = conffile.readLine() or "1234"
+	passwordR = conffile.readLine() or "12345"
+	doorSide = conffile.readLine() or "left"
+	doorT = conffile.readLine()
+	conffile.close()
+else
+	conffile = fs.open("doorconfig", "w")
+	print("What would you like your password to be?")
+	while password == "" do
+		password = read()
+		if password == "" then print("Your password must not be empty.") end
+	end
+	term.clear()
+	term.setCursorPos(1,1)
+	print("What would you like your password to return to XoXOS to be?")
+	while passwordC == "" do
+		passwordC = read()
+		if passwordC == "" then print("Your password must not be empty.") end
+		if passwordC == password then print("Can not be the same as door password."); passwordC = "" end
+	end
+	term.clear()
+	term.setCursorPos(1,1)
+	print("What would you like your password to reset your config to be?")
+	while passwordR == "" do
+		passwordR = read()
+		if passwordR == "" then print("Your password must not be empty.") end
+		if passwordR == password or passwordR == passwordC then print("Can not be the same as the other passwords."); passwordR = "" end
+	end
+	term.clear()
+	term.setCursorPos(1,1)
+	print("Which side is the door at? (Options: top, bottom, left, right, front, back")
+	while doorSide == "" do
+		doorSide = string.lower(read())
+		if not (doorSide == "top" or doorSide == "bottom" or doorSide == "left" or doorSide == "right" or doorSide == "front" or doorSide == "back" ) then print("Invalid Side.");doorSide = "" end
+	end
+	term.clear()
+	term.setCursorPos(1,1)
+	print("How long should the door stay open? (seconds)")
+	while doorT == 0 do
+		doorT = read()
+		if tonumber(doorT) == nil then print("Not a number");doorT = 0
+		elseif tonumber(doorT) <= 0 then print("Number must be bigger than 0.") ; doorT = 0
+		else doorT = tonumber(doorT) end
+	end
+	conffile.writeLine(password)
+	conffile.writeLine(passwordC)
+	conffile.writeLine(passwordR)
+	conffile.writeLine(doorSide)
+	conffile.writeLine(doorT)
+	conffile.close()
+end
+
+oldpull = os.pullEvent
+os.pullEvent = os.pullEventRaw
+rs.setOutput(string.lower(doorSide), false)
+
+while true do
+	function pwd()
+		while true do
+			term.clear()
+			term.setCursorPos(1,1)
+			print("Please enter password:")
+			pass = read("*")
+			if pass == password then
+				rs.setOutput(string.lower(doorSide), true)
+				print("Password Correct.")
+				sleep(doorT)
+				rs.setOutput(string.lower(doorSide), false)
+			elseif pass == passwordC then
+				ret = "st"
+				return
+			elseif pass == passwordR then
+				fs.delete("doorconfig")
+				ret = "rs"
+				return
+			else
+				print("Password Incorrect.")
+				sleep(5) -- Prevent / slower bruteforcing
+			end
+		end
+	end
+	function prot()
+		while true do
+			if fs.exists("disk/startup") then
+				fs.move("disk/startup", "disk/nicetry")
+			end
+			sleep(0.1)
+		end
+	end
+	if parallel.waitForAny(pwd, prot) then
+		term.clear()
+		term.setCursorPos(1,1)
+		if ret == "st" then
+		return true
+		elseif ret == "rs" then
+		return false
+		end
+	end
+end
