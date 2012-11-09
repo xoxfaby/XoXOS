@@ -40,6 +40,9 @@ end
 if pccrt == true then
 print("Accepted")
 rednet.send(pcid, "OK")
+logf = fs.open("loginlog", "a")
+logf.writeLine( pcid )
+logf.close()
 else
 print("Rejected")
 rednet.send(pcid, "BAD")
