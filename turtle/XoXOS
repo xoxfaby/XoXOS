@@ -1,4 +1,7 @@
 serverID = 44
+chatServerID = 235
+devnet = "off"
+dnmsg = ""
 
 function clear()
 term.setCursorPos(1,1)
@@ -44,7 +47,7 @@ while true do
 print(" XoXOS Turtle Edition")
 
 	term.setCursorPos(2,9)
-	if true then lsres = "guest" print("Signing in as guest because this " ); term.setCursorPos(5,10); print( "is a turtle.");sleep(3); break; end
+	if not rednet.send(1, "") then lsres = "guest" print("Signing in as guest because no" ); term.setCursorPos(5,10); print( "modem was found");sleep(3); break; end
 	if lsusr then
 	print("Username: " .. lsuser .. "\|" )
 	term.setCursorPos(2,11)
@@ -144,7 +147,8 @@ menu1[1] = { txt = "Excavate" , exec = function() shell.run("XoXRun", "excavate"
 menu1[2] = { txt = "Tunnel" , exec = function() shell.run("XoXRun", "tunnel") ; menuIndex = 1 end}
 if lsres == "OK" then
 
-menu1[5] = { txt = "Dev", exec = function() menu = ttable.copy( menu6 ) ; menuIndex = 1 end}
+menu1[3] = { txt = "Dev", exec = function() menu = ttable.copy( menu6 ) ; menuIndex = 1 end}
+menu1[4] = { txt = "DevNet", exec = function() devnet = "read" end}
 end
 
 
@@ -218,66 +222,152 @@ term.clear()
 term.setCursorPos(1,1)
 
 
+function xoxdraw()
 while true do
+	if devnet == "off" then
+		term.clear()
+		term.setCursorPos(1,1)
+		for k,v in ipairs(menu) do
+			print("   ")
+			if menuIndex == k then
+				print( ">> " .. v.txt .. " <<")
+			else
+				print( "   " .. v.txt)
+			end
+		end
+		term.setCursorPos(1,15)
+		print(dnmsg)
+		term.setCursorPos(1,16)
+		if lsres == "guest" then
+			print("Signed in as Guest")
+		elseif lsres == "OK" then
+			print("Signed in as " .. lsuser )
+		end
+		term.setCursorPos(1,17)
+		print(notifytext)
+	
+		conf = fs.open("XoXOSDev", "w")
+		conf.writeLine("Nope.")
+		conf.close()
+	
+		local event, param1 = os.pullEvent("key")
+		notifytext = "XoXOS 1.2"
+		if param1 == 200 then
+			menuIndex = menuIndex - 1
+			if menuIndex < 1 then menuIndex = #menu end
+		elseif param1 == 208 then
+			menuIndex = menuIndex + 1
+			if menuIndex > #menu then menuIndex = 1 end
+			elseif param1 == 28 or param1 == 205 then
+		term.clear()
+			term.setCursorPos(1,1)
+			menu[menuIndex].exec()
+		elseif param1 == 14 or param1 == 203 then
+			menu.esc()
+		elseif param1 == 60 then
+			term.clear()
+			term.setCursorPos(1,1)
+			print("Enter Developer Password:")
+			local pwwd = read("*")
+			if pwwd == "luadev" then
+				conf = fs.open("XoXOSDev", "w")
+				conf.writeLine("Let's go")
+				conf.close()
+				return
+			end
+		end
+	else
+		sleep(2)
+	end
+end
+end
 
-term.clear()
-term.setCursorPos(1,5)
-for k,v in ipairs(menu) do
-if menuIndex == k then
-print( ">> " .. v.txt .. " <<")
+dnenter = false
+dnlog = {}
+dnlog[1] = "Welcome to DevNet."
+
+
+function devnetprint()
+dnur = 0
+lastmsg = ""
+while true do
+sleep(0.5)
+	if devnet == "read" then
+		dnur = 0
+		if true then
+				clear()
+			for _,v in ipairs(dnlog) do
+				print(v)
+			end
+			print("Press Enter to write")
+			lastmsg = dnlog[#dnlog]
+		end
+	else
+		if dnur > 0 then dnmsg = dnur .. " unread DevNet messages" end 
+	end
+		
+end	
+end
+
+function devnetread()
+dnmsg = ""
+rednet.send(chatServerID, lsuser .. "@" .. os.computerID() .. ".turtle" .. ";" .. "SAO" )
+while true do
+	if devnet == "write" then
+		clear()
+		print("Enter Message. exit to exit DevNet")
+		dnwmsg = read()
+		if dnwmsg == "exit" then
+			devnet = "off"
+		elseif dnwmsg == "" then
+			devnet = "read"
+		else
+			rednet.send(chatServerID, lsuser .. "@" .. os.computerID() .. ".turtle" .. ";" .. dnwmsg )
+			devnet = "read"
+		end
+	else
+		sleep(0.5)
+	end
+end	
+end
+
+function devnetlistener()
+while true do
+_, dnlparam1, dnlparam2, _ = os.pullEvent("rednet_message")
+dnlmsg = {}
+if dnlparam1 == chatServerID then
+if dnlparam2 == "NULL" then
+	rednet.send(serverID, "")
 else
-print( "   " .. v.txt)
+	dnur = dnur + 1
+	for i in string.gmatch(dnlparam2, "[^%;]+") do
+		dnlmsg[#dnlmsg + 1] = i
+	end
+	if dnlmsg[2] == "SAO" then
+		dnlog[#dnlog + 1] = dnlmsg[1] .. " signed in."
+	else
+		dnlog[#dnlog + 1] = dnlmsg[1] .. ": " .. dnlmsg[2]
+	end
+end
+end
 end
 end
 
-term.setCursorPos(1,16)
-if lsres == "guest" then
-print("Signed in as Guest")
-elseif lsres == "OK" then
-print("Signed in as " .. lsuser )
-end
-term.setCursorPos(1,17)
-print(notifytext)
-
-conf = fs.open("XoXOSDev", "w")
-conf.writeLine("Nope.")
-conf.close()
-
-local event, param1 = os.pullEvent("key")
-notifytext = "XoXOS 1.1"
-if param1 == 200 then
-menuIndex = menuIndex - 1
-if menuIndex < 1 then menuIndex = #menu end
-elseif param1 == 208 then
-menuIndex = menuIndex + 1
-if menuIndex > #menu then menuIndex = 1 end
-elseif param1 == 28 or param1 == 205 then
-term.clear()
-term.setCursorPos(1,1)
-menu[menuIndex].exec()
-elseif param1 == 14 or param1 == 203 then
-menu.esc()
-elseif param1 == 60 then
-term.clear()
-term.setCursorPos(1,1)
-print("Enter Developer Password:")
-local pwwd = read("*")
-if pwwd == "luadev" then
-conf = fs.open("XoXOSDev", "w")
-conf.writeLine("Let's go")
-conf.close()
-return
-end
+function devnetenter()
+	while true do
+		if devnet == "read" then
+			_, dneparam1 = os.pullEvent("key")
+			if dneparam1 == 28 and devnet == "read" then
+				devnet = "write"
+			end
+		else
+			sleep(0.5)
+		end
+	end
 end
 
-
-
-
-
-
-
-
-
-
-
+if lsres == "OK" then
+parallel.waitForAny(devnetread,xoxdraw,devnetlistener,devnetprint, devnetenter)
+else
+xoxdraw()
 end
