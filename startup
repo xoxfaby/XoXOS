@@ -46,4 +46,17 @@ sleep(0.05)
 end
 
 
-if os.computerID() == serverID then shell.run("XoXOSLS") elseif os.computerID() == ChatServerID then shell.run("XoXOSCS") else while true do shell.run("XoXOS") end end
+if os.computerID() == 44 then 
+	shell.run("XoXOSLS") 
+elseif os.computerID() == 235 then 
+	shell.run("XoXOSCS") 
+else
+	while true do 
+		shell.run("XoXOS") 
+		conf = fs.open("XoXOSDev", "r")
+		if conf.readLine() == "Let's go" then
+conf.close()
+return
+end
+end
+end
